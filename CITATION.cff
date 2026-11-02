@@ -1,0 +1,38 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite the article below (preferred citation) and this software."
+title: "SMR data-center cogeneration framework: hourly co-optimization of small-modular-reactor power and steam-driven cooling for data-center IT and cooling loads"
+version: "1.0.0"
+repository-code: "https://github.com/Henryutd2021/smr-datacenter-cogeneration"
+license: MIT
+authors:
+  - family-names: Li
+    given-names: Honglin
+    orcid: "https://orcid.org/0000-0002-8405-3032"
+keywords:
+  - small modular reactor
+  - cogeneration
+  - data centers
+  - absorption cooling
+  - techno-economic analysis
+  - mixed-integer programming
+preferred-citation:
+  type: article
+  authors:
+    - family-names: Li
+      given-names: Honglin
+      orcid: "https://orcid.org/0000-0002-8405-3032"
+    - family-names: She
+      given-names: Buxin
+    - family-names: Zhang
+      given-names: Jie
+  title: "Techno-Economic Boundary Analysis of Small Modular Reactor Cogeneration for Hyperscale Data Center IT and Cooling Loads"
+  journal: "Energy Conversion and Management"
+  year: 2026
+  notes: "Accepted; journal DOI not yet assigned. Preprint: arXiv:2608.10999."
+  identifiers:
+    - type: doi
+      value: 10.48550/arXiv.2608.10999
+      description: "arXiv preprint"
+    - type: url
+      value: "https://arxiv.org/abs/2608.10999"
+      description: "arXiv preprint"
