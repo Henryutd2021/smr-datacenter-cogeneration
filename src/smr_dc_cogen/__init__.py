@@ -22,7 +22,7 @@ from .solve import SolveError, result_of, run_case, solve
 from .synthetic import illustrative_endpoint_factors, illustrative_parameters, synthetic_timeseries
 from .timeseries import SeriesError, TimeSeries
 
-__version__ = "1.0.0"
+__version__ = "1.0.1"
 
 __all__ = [
     "EndpointFactors", "absorber_breakeven_capex", "absorber_water_factor", "breakeven_capex", "crossover_price",

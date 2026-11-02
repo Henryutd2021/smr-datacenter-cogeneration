@@ -1,7 +1,7 @@
 cff-version: 1.2.0
 message: "If you use this software, please cite the article below (preferred citation) and this software."
 title: "SMR data-center cogeneration framework: hourly co-optimization of small-modular-reactor power and steam-driven cooling for data-center IT and cooling loads"
-version: "1.0.0"
+version: "1.0.1"
 repository-code: "https://github.com/Henryutd2021/smr-datacenter-cogeneration"
 license: MIT
 authors:

@@ -15,7 +15,7 @@ The inputs fall into three families:
 
 | Input | Symbol | Public source type (as used in the article) | Preparation (helper) | Stored as |
 |---|---|---|---|---|
-| electricity price | $`\pi_\mathrm{g}(t)`$ | ERCOT day-ahead settlement point prices at a hub, from the ERCOT Market Information System (report NP4-183-CD), retrieved with the open-source `gridstatus` package | one value per hour in market time; leap years trimmed (`trim_to_year`) | `timeseries.csv`: `price_usd_per_mwh` |
+| electricity price | $`\pi_\mathrm{g}(t)`$ | ERCOT day-ahead settlement point prices at a hub, from the ERCOT Market Information System (report NP4-190-CD), retrieved with the open-source `gridstatus` package | one value per hour in market time; leap years trimmed (`trim_to_year`) | `timeseries.csv`: `price_usd_per_mwh` |
 | grid carbon intensity | $`\theta(t)`$ | U.S. EIA Form 930 Hourly Electric Grid Monitor, generation by fuel for the balancing authority, weighted by technology life-cycle emission factors (UNECE 2022 life-cycle assessment) | hourly average emission factor (`average_carbon_intensity`) | `carbon_g_per_kwh` |
 | wet-bulb temperature | $`T_\mathrm{wb}(t)`$ | Open-Meteo historical-weather archive (ECMWF ERA5 reanalysis): hourly dry-bulb temperature and relative humidity at the site | Stull (2011) wet-bulb formula (`wet_bulb_stull`) | `wet_bulb_c` |
 | IT load | $`P_\mathrm{IT}(t)`$ | a published data-center workload power profile; the article's source and its processing are described in its Section 2.1 and Supplementary Note 6 | hourly means (`resample_hourly_mean`), scaling to the facility (`scale_to_peak` or a fixed factor), weekday alignment with the market year (`align_weekdays`) | `it_load_mw` |
@@ -49,7 +49,7 @@ The inputs fall into three families:
 ### 3. Grid carbon intensity
 
 1. Download the EIA-930 balancing-authority file for the year and keep the generation by fuel.
-2. Map the EIA fuel categories to the technologies of the emission-factor table. EIA changed its category split in 2024; aggregate back to one consistent set.
+2. Map the EIA fuel categories to the technologies of the emission-factor table. EIA reports battery storage as a separate source from 1 January 2025; aggregate back to one consistent set.
 3. Compute the hourly average emission factor, $`\sum_f g_f\,\mathrm{EF}_f / \sum_f g_f`$ (`average_carbon_intensity`). Negative values, such as storage charging, are treated as zero generation.
 4. Align EIA-930 timestamps (UTC and local columns) with the price clock.
 
