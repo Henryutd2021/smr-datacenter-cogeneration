@@ -1,5 +1,7 @@
 # SMR–data-center cogeneration framework: reactor power and steam-driven cooling against grid supply
 
+Author: [Honglin Li](https://henryutd2021.github.io/)
+
 A documented, runnable implementation of the techno-economic framework in:
 
 > Honglin Li, Buxin She and Jie Zhang. **Techno-economic boundary analysis of small modular reactor cogeneration for hyperscale data center IT and cooling loads.** *Energy Conversion and Management* (2026, accepted). Preprint: [arXiv:2608.10999](https://arxiv.org/abs/2608.10999).
