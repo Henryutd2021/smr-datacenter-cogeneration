@@ -1,6 +1,6 @@
 # Mathematical formulation
 
-This document states the model as implemented by this framework. The model is that of H. Li, B. She and J. Zhang, "Techno-economic boundary analysis of small modular reactor cogeneration for hyperscale data center IT and cooling loads", *Energy Conversion and Management* (2026, accepted); preprint arXiv:2608.10999, [doi:10.48550/arXiv.2608.10999](https://doi.org/10.48550/arXiv.2608.10999). It covers Section 2 of the main text and Supplementary Notes 7 and 9.
+This document states the model as implemented by this framework. The model is that of H. Li, B. She and J. Zhang, "Techno-economic boundary analysis of small modular reactor cogeneration for hyperscale data center IT and cooling loads", *Energy Conversion and Management* 372 (2027) 122376, [doi:10.1016/j.enconman.2026.122376](https://doi.org/10.1016/j.enconman.2026.122376); preprint arXiv:2608.10999, [doi:10.48550/arXiv.2608.10999](https://doi.org/10.48550/arXiv.2608.10999). It covers Section 2 of the main text and Supplementary Notes 7 and 9.
 
 - Equation numbers follow the arXiv preprint (v1): (1)–(13) are in the main text, (S1)–(S14) in its Supplementary Information.
 - Relations that the article states in words, without a number, are given here without a number.

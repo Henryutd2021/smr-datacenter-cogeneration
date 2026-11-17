@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "smr-dc-cogen"
 version = "1.0.2"
-description = "Hourly co-optimization of small-modular-reactor cogeneration (steam extraction to absorption cooling) for a data center's IT and cooling loads against grid supply (framework of Li, She & Zhang, arXiv:2608.10999)"
+description = "Hourly co-optimization of small-modular-reactor cogeneration (steam extraction to absorption cooling) for a data center's IT and cooling loads against grid supply (framework of Li, She & Zhang, Energy Convers. Manag. 372 (2027) 122376)"
 readme = "README.md"
 license = {text = "MIT"}
 authors = [{name = "Honglin Li"}]

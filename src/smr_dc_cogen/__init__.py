@@ -1,5 +1,6 @@
 """smr_dc_cogen: hourly techno-economic framework for small-modular-reactor cogeneration serving a data center's
-IT and cooling loads, compared with grid supply (framework of Li, She & Zhang, arXiv:2608.10999).
+IT and cooling loads, compared with grid supply (framework of Li, She & Zhang, Energy Convers. Manag. 372 (2027) 122376;
+preprint arXiv:2608.10999).
 
 See docs/formulation.md for the equations (numbered as in the article), docs/data_pipeline.md for inputs,
 docs/scenarios.md for the study design and docs/architecture.md for the code layout.
