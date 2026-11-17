@@ -4,7 +4,7 @@ Author: [Honglin Li](https://henryutd2021.github.io/)
 
 A documented, runnable implementation of the techno-economic framework in:
 
-> Honglin Li, Buxin She and Jie Zhang. **Techno-economic boundary analysis of small modular reactor cogeneration for hyperscale data center IT and cooling loads.** *Energy Conversion and Management* (2026, accepted). Preprint: [arXiv:2608.10999](https://arxiv.org/abs/2608.10999).
+> Honglin Li, Buxin She and Jie Zhang. **Techno-economic boundary analysis of small modular reactor cogeneration for hyperscale data center IT and cooling loads.** *Energy Conversion and Management* 372 (2027) 122376. [doi:10.1016/j.enconman.2026.122376](https://doi.org/10.1016/j.enconman.2026.122376). Preprint: [arXiv:2608.10999](https://arxiv.org/abs/2608.10999).
 
 A small modular reactor colocated with a data center can sell low-carbon electricity and can also cool the data center: a mid-pressure steam extraction drives an absorption chiller.
 

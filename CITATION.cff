@@ -1,7 +1,7 @@
 cff-version: 1.2.0
 message: "If you use this software, please cite the article below (preferred citation) and this software."
 title: "SMR data-center cogeneration framework: hourly co-optimization of small-modular-reactor power and steam-driven cooling for data-center IT and cooling loads"
-version: "1.0.1"
+version: "1.0.2"
 repository-code: "https://github.com/Henryutd2021/smr-datacenter-cogeneration"
 license: MIT
 authors:
@@ -25,11 +25,17 @@ preferred-citation:
       given-names: Buxin
     - family-names: Zhang
       given-names: Jie
-  title: "Techno-Economic Boundary Analysis of Small Modular Reactor Cogeneration for Hyperscale Data Center IT and Cooling Loads"
+  title: "Techno-economic boundary analysis of small modular reactor cogeneration for hyperscale data center IT and cooling loads"
   journal: "Energy Conversion and Management"
-  year: 2026
-  notes: "Accepted; journal DOI not yet assigned. Preprint: arXiv:2608.10999."
+  volume: 372
+  start: 122376
+  year: 2027
+  doi: 10.1016/j.enconman.2026.122376
+  notes: "Article 122376; published online 17 November 2026. Preprint: arXiv:2608.10999."
   identifiers:
+    - type: doi
+      value: 10.1016/j.enconman.2026.122376
+      description: "Published article"
     - type: doi
       value: 10.48550/arXiv.2608.10999
       description: "arXiv preprint"
