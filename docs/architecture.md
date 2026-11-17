@@ -97,7 +97,7 @@ For Cases 1 and 2, `CaseResult.solver` holds the solver name and version, status
 
 - energies: IT, cooling, absorber and chiller cooling, chiller and parasitic electricity, reactor heat, extraction, net generation, imports and exports, battery throughput;
 - the absorber's share of cooling;
-- the net footprint (t CO₂);
+- the export-credited carbon-accounting balance (`footprint_t_co2`, t CO₂);
 - the levelized credit;
 - the number of hours with simultaneous battery charge and discharge.
 

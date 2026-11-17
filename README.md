@@ -2,7 +2,7 @@
 
 Author: [Honglin Li](https://henryutd2021.github.io/)
 
-A documented, runnable implementation of the techno-economic framework in:
+A documented, runnable implementation of the techno-economic framework accompanying:
 
 > Honglin Li, Buxin She and Jie Zhang. **Techno-economic boundary analysis of small modular reactor cogeneration for hyperscale data center IT and cooling loads.** *Energy Conversion and Management* 372 (2027) 122376. [doi:10.1016/j.enconman.2026.122376](https://doi.org/10.1016/j.enconman.2026.122376). Preprint: [arXiv:2608.10999](https://arxiv.org/abs/2608.10999).
 
@@ -28,17 +28,17 @@ Under which reactor-capital, market and policy conditions is a colocated small m
 |---|---|---|
 | Configurations | four: grid-only (Case 0); reactor without heat recovery (Case 1); reactor with steam extraction to an absorption chiller (Case 2); on-site natural gas combined cycle, islanded (Case 3) | same four cases |
 | Site and market | a hyperscale data center in Houston, Texas; ERCOT day-ahead prices | any site with hourly price, grid carbon-intensity and wet-bulb series |
-| Reactor | GE-Hitachi BWRX-300 boiling-water small modular reactor | any reactor given by thermal rating, minimum load, ramp limit and refueling outage |
+| Reactor | GE-Hitachi BWRX-300 boiling-water small modular reactor | any reactor given by thermal rating, minimum load, ramp limit and scheduled outage window (an availability proxy) |
 | Turbine | cascaded high/low-pressure turbine; Willans line with an extraction penalty | same; fitting and heat-balance helpers included |
 | Cooling | double-effect LiBr–H₂O absorber sharing dispatch with a water-cooled centrifugal chiller; wet-bulb-dependent COPs; crystallization gate | same |
 | Time | hourly, one year (8,760 h) | hourly, one year or any shorter block (costs annualized) |
 | Integer structure | special-ordered-set (SOS2) part-load map of the electric chiller; hourly import–export interlock | same (the SOS2 map is written with the equivalent incremental formulation) |
 | Objective | total annualized cost: capital, fixed and variable O&M, fuel, grid exchange, carbon, Section 45Y credit | same |
 | Policy | Section 45Y clean-electricity credit levelized over the comparison window; carbon price with hourly export crediting | same |
-| Study design | a baseline and one-at-a-time sweeps (market year, cooling efficiency, battery, reactor capital, reactor × absorber capital, carbon price, financing, data-center size, capital × market year) | scenario tools for each sweep, matched grid-cost margins, closed-form break-even capital and crossover carbon prices |
+| Study design | a baseline, one-at-a-time sweeps and joint grids (market year, cooling efficiency, battery, reactor capital, reactor × absorber capital, carbon price, financing, data-center size, capital × market year), plus separate robustness checks | scenario tools for the main sweeps, matched grid-cost margins, closed-form break-even capital and crossover carbon prices |
 | Solver | Pyomo with Gurobi | linopy; HiGHS by default, Gurobi optional |
 
-The complete mathematics is in [docs/formulation.md](docs/formulation.md). Equation numbers in this repository refer to the arXiv preprint (v1): (1)–(13) in the main text and (S1)–(S14) in its Supplementary Information.
+The complete mathematics is in [docs/formulation.md](docs/formulation.md). Equation numbers in this repository refer to the arXiv preprint (v1): (1)–(13) in the main text and (S1)–(S14) in its Supplementary Information. See [Differences from the published study](docs/formulation.md#differences-from-the-published-study) before comparing results.
 
 ## What is in this repository
 
@@ -91,7 +91,7 @@ print(reactor_parity_capex(cogen, grid.tac, params))       # reactor capital at 
 ## Using your own data
 
 1. **Hourly series.** Build them as described in [docs/data_pipeline.md](docs/data_pipeline.md), with the helpers in `smr_dc_cogen.timeseries` (see `examples/prepare_inputs.py`). The format is validated when read.
-2. **Parameters.** Put your technical and cost parameters in `parameters.json`, in the units named by each field. The article lists its baseline values and sources in its Table 2 and Supplementary Tables S7–S8.
+2. **Parameters.** Put your technical and cost parameters in `parameters.json`, in the units named by each field. The article lists equipment costs and capital-recovery periods in Table 2; further input details are in the arXiv v1 preprint's Supplementary Tables S7–S8.
 3. **Runs.** Run the baseline and your sweeps ([docs/scenarios.md](docs/scenarios.md)). Check the balance residuals (`balance_residuals`) and record the solver and gap with the results.
 
 A full-year Case 1 or Case 2 instance is a mixed-integer program with roughly a hundred thousand binaries. HiGHS solves the synthetic full year in seconds, but harder price years can take much longer. Gurobi is supported, and shorter blocks with annualized costs are a fallback ([docs/architecture.md](docs/architecture.md#problem-size)).

@@ -2,7 +2,7 @@
 
 This document describes how the model inputs are built from public sources, and the input format the framework reads.
 
-- It follows the input families of the article (Section 2.3, Supplementary Note 6 and Supplementary Tables S7–S8). The article lists its baseline values and sources there; they are not repeated here.
+- It follows the input families of the article (Section 2.3). Supplementary references and preparation details follow the arXiv v1 preprint (Supplementary Note 6 and Supplementary Tables S7–S8); baseline values are not repeated here.
 - The repository contains no input data. [`examples/prepare_inputs.py`](../examples/prepare_inputs.py) runs every generic step below on invented raw records, and `smr_dc_cogen.synthetic` produces a complete synthetic input set.
 
 ## Overview
@@ -11,25 +11,25 @@ The inputs fall into three families:
 
 - exogenous hourly series: IT load, electricity price, average grid carbon intensity, wet-bulb temperature, and the gas price for the NGCC case;
 - equipment parameters: capital and operating cost coefficients, plus technical bounds for each block;
-- financial and policy parameters: WACC, asset lives, the Section 45Y credit and the carbon price.
+- financial and policy parameters: WACC, capital-recovery periods, the Section 45Y credit and the carbon price.
 
-| Input | Symbol | Public source type (as used in the article) | Preparation (helper) | Stored as |
+| Input | Symbol | Public source type (article and arXiv v1 preprint) | Preparation (helper) | Stored as |
 |---|---|---|---|---|
 | electricity price | $`\pi_\mathrm{g}(t)`$ | ERCOT day-ahead settlement point prices at a hub, from the ERCOT Market Information System (report NP4-190-CD), retrieved with the open-source `gridstatus` package | one value per hour in market time; leap years trimmed (`trim_to_year`) | `timeseries.csv`: `price_usd_per_mwh` |
 | grid carbon intensity | $`\theta(t)`$ | U.S. EIA Form 930 Hourly Electric Grid Monitor, generation by fuel for the balancing authority, weighted by technology life-cycle emission factors (UNECE 2022 life-cycle assessment) | hourly average emission factor (`average_carbon_intensity`) | `carbon_g_per_kwh` |
 | wet-bulb temperature | $`T_\mathrm{wb}(t)`$ | Open-Meteo historical-weather archive (ECMWF ERA5 reanalysis): hourly dry-bulb temperature and relative humidity at the site | Stull (2011) wet-bulb formula (`wet_bulb_stull`) | `wet_bulb_c` |
-| IT load | $`P_\mathrm{IT}(t)`$ | a published data-center workload power profile; the article's source and its processing are described in its Section 2.1 and Supplementary Note 6 | hourly means (`resample_hourly_mean`), scaling to the facility (`scale_to_peak` or a fixed factor), weekday alignment with the market year (`align_weekdays`) | `it_load_mw` |
+| IT load | $`P_\mathrm{IT}(t)`$ | a published data-center workload power profile; the article describes its source and processing in Section 2.1 | hourly means (`resample_hourly_mean`), scaling to the facility (`scale_to_peak` or a fixed factor), weekday alignment with the market year (`align_weekdays`) | `it_load_mw` |
 | hub gas price | $`\pi_\mathrm{ng}(t)`$ less basis | U.S. EIA Henry Hub daily natural-gas spot price | non-trading days forward-filled, each day repeated over its hours (`daily_to_hourly`) | `gas_usd_per_mmbtu` |
 | regional gas basis | part of $`\pi_\mathrm{ng}`$ | published regional hub differentials | one constant | `gas_plant.gas_basis_usd_per_mmbtu` |
-| reactor and turbine | $`\overline{P}_\mathrm{rx}`$, $`\underline{P}_\mathrm{rx}`$, $`\Delta P_\mathrm{rx}^{\max}`$, $`a_\mathrm{w}`$, $`b_\mathrm{w}`$, $`\xi_\mathrm{aux}`$ | vendor design basis and public regulatory or IAEA ARIS descriptions; turbine part-load heat-rate characteristic | Willans line through the design point (`heat_rate_to_thermal`, `fit_willans`) | `reactor.*`, `turbine.*` |
+| reactor and turbine | $`\overline{P}_\mathrm{rx}`$, $`\underline{P}_\mathrm{rx}`$, $`\Delta P_\mathrm{rx}^{\max}`$, $`a_\mathrm{w}`$, $`b_\mathrm{w}`$, $`\xi_\mathrm{aux}`$ | vendor design ratings; assumed normalized turbine part-load shape (Sec. 2.2.1) | framework helper: Willans line fitted through the design point (`heat_rate_to_thermal`, `fit_willans`) | `reactor.*`, `turbine.*` |
 | extraction penalty | $`\alpha_\mathrm{w}`$ | steam tables at the extraction-tap condition | heat balance (`extraction_penalty_from_heat_balance`) | `turbine.extraction_penalty` |
 | capacity factor | $`\overline{\mathrm{CF}}`$ | EIA *Electric Power Monthly*, nuclear fleet capacity factors | outage length (`Outage.from_capacity_factor`) | `outage.*` |
 | absorber | $`\mathrm{COP}_\mathrm{a}^{\,0}`$, $`\delta`$, $`\overline{\mathrm{COP}}_\mathrm{a}`$, $`T_\mathrm{cry}`$, $`\Delta T_\mathrm{cw}`$, $`\beta_\mathrm{a}`$ | double-effect LiBr–H₂O vendor datasheets and absorption-refrigeration references | – | `absorber.*` |
 | vapor-compression chiller | $`\mathrm{COP}_\mathrm{v}`$, part-load shape | water-cooled centrifugal chiller ratings; ANSI/AHRI Standard 550/590 part-load (IPLV) weighting | breakpoints of relative COP versus load fraction | `chiller.*` |
 | capital and O&M costs | $`\mathrm{CAPEX}_k`$, $`\mathrm{FOM}_k`$, $`v_x`$ | Annual Technology Baseline (ATB) of the National Laboratory of the Rockies (NLR) for the reactor, NGCC and battery. Alternative reactor-capital anchors: public project budgets and vendor targets. Absorber: U.S. DOE combined-heat-and-power fact sheets and vendor literature. VCC: ASHRAE engineering practice | – | `*.capex_*`, `*.fom_*`, `*.vom_*` |
 | nuclear fuel cost | $`\pi_\mathrm{f}^\mathrm{e}`$ | published fleet fuel-cost statistics (net-electric basis) | converted to the thermal basis in the model | `reactor.fuel_usd_per_mwh_e` |
-| emission factors | $`\gamma_\mathrm{rx}`$, $`\gamma_\mathrm{ng}`$ | UNECE 2022 life-cycle assessment (nuclear); EIA combustion factors plus upstream-methane literature (NGCC) | – | `reactor.lifecycle_g_per_kwh`, `gas_plant.co2_*` |
-| finance and policy | $`i`$, $`N_k`$, $`\bar{c}`$ | ATB financial assumptions and asset lives; 26 U.S.C. §45Y, the annual Federal Register inflation adjustment and IRS guidance | levelization of the credit (Eq. 12) | `finance.*`, `*.lifetime_yr` |
+| emission factors | $`\gamma_\mathrm{rx}`$, $`\gamma_\mathrm{ng}`$ | IPCC 2014 generic nuclear lifecycle median, not a BWRX-300-specific measurement (Sec. 2.2.5); combustion and upstream-methane factors (NGCC) | – | `reactor.lifecycle_g_per_kwh`, `gas_plant.co2_*` |
+| finance and policy | $`i`$, $`N_k`$, $`\bar{c}`$ | ATB financial assumptions and study capital-recovery periods (Sec. 2.2.5); 26 U.S.C. §45Y, the annual Federal Register inflation adjustment and IRS guidance | levelization of the credit (Eq. 12) | `finance.*`, `*.lifetime_yr` |
 | secondary-endpoint factors | $`w_x`$, $`f_\mathrm{sc}`$, $`e_k`$ | water consumption by generation technology (Macknick et al. 2012); basin scarcity (WRI Aqueduct, AWARE); embodied energy of power plants (Lenzen 2008) | $`w_\mathrm{a}`$ from $`w_\mathrm{v}`$ (`absorber_water_factor`) | `EndpointFactors` |
 
 ## Steps
@@ -53,7 +53,7 @@ The inputs fall into three families:
 3. Compute the hourly average emission factor, $`\sum_f g_f\,\mathrm{EF}_f / \sum_f g_f`$ (`average_carbon_intensity`). Negative values, such as storage charging, are treated as zero generation.
 4. Align EIA-930 timestamps (UTC and local columns) with the price clock.
 
-This is an average emission factor. The article uses it as a tractable proxy for the marginal factor; marginal factors from other sources can be substituted in the same column.
+Imports are charged and exports credited at this hourly average grid emission factor, as in the article (Sec. 2.2.5). This is attributional accounting, not an estimate of marginal grid-emissions response. Substituting marginal factors would define a different accounting scenario.
 
 ### 4. Wet-bulb temperature
 
@@ -66,7 +66,7 @@ The same series drives the absorber COP (Eq. 4), its crystallization gate (Eq. 5
 
 1. Start from a public whole-facility workload power profile. Resample it to hourly means (`resample_hourly_mean`), then scale it to the facility: the article scales a smaller facility's profile by a constant factor.
 2. If the profile belongs to another calendar year, shift it circularly by whole days so that day of week and hour of day line up with the market year (`align_weekdays`). This keeps the seasonal position and avoids pairing weekend troughs with weekday price peaks.
-3. Use the same trace in every case and scenario. The size sweep scales it (`TimeSeries.scaled_load`).
+3. Use the same trace across cases in the main scenarios; the size sweep scales it (`TimeSeries.scaled_load`). For the article's separate equal-energy constant-load check (Sec. 2.1), supply a constant series at the original trace's mean load, keeping other inputs fixed.
 
 This repository does not redistribute any workload dataset. Check the terms of use of the profile you choose.
 
@@ -77,19 +77,19 @@ This repository does not redistribute any workload dataset. Check the terms of u
 
 ### 7. Turbine, extraction and outage
 
-1. **Willans line.** Take the turbine's part-load heat-rate characteristic, as gross output and gross heat rate. Convert it to thermal input with $`P_\mathrm{rx} = P_\mathrm{tg}\,\mathrm{HR}/3600`$ (`heat_rate_to_thermal`). Fit $`P_\mathrm{tg} = a_\mathrm{w} P_\mathrm{rx} - b_\mathrm{w}`$ by least squares, constrained through the design point (`fit_willans`, which also returns $`R^2`$).
+1. **Willans line.** This framework can fit a supplied turbine part-load heat-rate characteristic, as gross output and gross heat rate. Convert it to thermal input with $`P_\mathrm{rx} = P_\mathrm{tg}\,\mathrm{HR}/3600`$ (`heat_rate_to_thermal`). Fit $`P_\mathrm{tg} = a_\mathrm{w} P_\mathrm{rx} - b_\mathrm{w}`$ by least squares, constrained through the design point (`fit_willans`, which also returns $`R^2`$). The article calibrates gross rating while retaining a fixed normalized part-load shape (Sec. 2.2.1); it does not establish a manufacturer-validated turbine map.
 2. **Extraction penalty.** At the extraction-tap condition, use steam tables to obtain, per kilogram of extracted steam:
    - the low-pressure expansion work forfeited;
    - the heat delivered to the absorber generator;
    - the work returned through the hot-condensate credit.
 
    Then $`\alpha_\mathrm{w} = (\text{lost work} - \text{credit})/\text{heat}`$ (`extraction_penalty_from_heat_balance`). A parallel main-steam tap would instead be charged at the full turbine efficiency.
-3. **Outage.** Choose the start hour of the refueling outage, in a mild-load shoulder season, and its length from the fleet capacity factor (`Outage.from_capacity_factor`).
+3. **Outage.** Choose the start hour of the scheduled outage window, in a mild-load shoulder season, and its length from the fleet capacity factor (`Outage.from_capacity_factor`). This is an aggregate availability proxy (Sec. 2.2.1), not a manufacturer-specified refueling duration.
 
 ### 8. Costs, finance and policy
 
 1. **Units.** Express every capital cost per kW of the asset's size unit: kW_e net for the reactor and NGCC, kW_c for the chillers, kWh for the battery. Use one constant-dollar year for all costs and prices.
-2. **Lives.** Use one engineering life per asset; capital is annualized over each asset's own life.
+2. **Capital recovery.** Set `*.lifetime_yr` to each asset's financial capital-recovery period, distinct from its technical life (Sec. 2.2.5).
 3. **45Y credit.** Use the statutory amount for the year, at the rate that applies (for example the prevailing-wage rate), and the statutory credit period. Choose the cost-comparison window over which Eq. (12) levelizes it.
 4. **Nuclear fuel.** Give the fuel cost on the net-electric basis; the model converts it to the thermal basis with the rated net and thermal outputs.
 

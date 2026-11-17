@@ -1,11 +1,22 @@
 # Mathematical formulation
 
-This document states the model as implemented by this framework. The model is that of H. Li, B. She and J. Zhang, "Techno-economic boundary analysis of small modular reactor cogeneration for hyperscale data center IT and cooling loads", *Energy Conversion and Management* 372 (2027) 122376, [doi:10.1016/j.enconman.2026.122376](https://doi.org/10.1016/j.enconman.2026.122376); preprint arXiv:2608.10999, [doi:10.48550/arXiv.2608.10999](https://doi.org/10.48550/arXiv.2608.10999). It covers Section 2 of the main text and Supplementary Notes 7 and 9.
+This document states the model as implemented by this framework, which accompanies H. Li, B. She and J. Zhang, "Techno-economic boundary analysis of small modular reactor cogeneration for hyperscale data center IT and cooling loads", *Energy Conversion and Management* 372 (2027) 122376, [doi:10.1016/j.enconman.2026.122376](https://doi.org/10.1016/j.enconman.2026.122376); preprint arXiv:2608.10999, [doi:10.48550/arXiv.2608.10999](https://doi.org/10.48550/arXiv.2608.10999). It follows Section 2 and Supplementary Notes 7 and 9 of the arXiv v1 preprint.
 
-- Equation numbers follow the arXiv preprint (v1): (1)–(13) are in the main text, (S1)–(S14) in its Supplementary Information.
+- Equation numbers follow the arXiv preprint (v1): (1)–(13) are in the main text, (S1)–(S14) in its Supplementary Information. The published article uses the same numbering for the corresponding main-text equations (1)–(13), verified against its text; Eqs. (5) and (11) differ as described below. Supplementary references throughout this document refer to that preprint.
 - Relations that the article states in words, without a number, are given here without a number.
 - [Conventions of this implementation](#conventions-of-this-implementation) lists the definitions that the framework makes explicit.
 - Notation follows the article's nomenclature. The last column of each table gives the name used in the code ([`parameters.py`](../src/smr_dc_cogen/parameters.py), [`model.py`](../src/smr_dc_cogen/model.py), [`results.py`](../src/smr_dc_cogen/results.py)).
+
+## Differences from the published study
+
+This framework is a separate implementation. The following differences and shared interpretation limits matter when comparing it with the article.
+
+- **Absorber maintenance (Sec. 2.2.2, Eq. (5)).** The article excludes reactor-outage and absorber-maintenance hours separately; the windows coincide in its baseline. This framework's `absorber_available` combines the temperature gate with only the reactor-outage mask. Changing that window also changes assumed absorber downtime; independent maintenance in the article's two-year check is not implemented.
+- **Nuclear carbon billing (Sec. 2.2.5, Eq. (11)).** The article distinguishes the billed nuclear factor from the lifecycle reporting factor and tests zero nuclear billing while retaining lifecycle emissions. This framework uses `reactor.lifecycle_g_per_kwh` for both in `model.build_model` and `results.account`, as in the article's baseline. Setting it to zero also removes reactor lifecycle emissions from reporting, so it cannot express that sensitivity separately.
+- **Outage scheduling (Sec. 2.2.1).** The article treats scheduled downtime as an aggregate availability proxy and separately tests the refueling interval. This framework supports one contiguous `Outage` per input horizon; `Outage.from_capacity_factor` sets aggregate downtime. Interpret its length as unavailable hours, not a manufacturer-specified refueling duration.
+- **Capital recovery (Sec. 2.2.5, Eq. (9)).** The article distinguishes capital-recovery periods from technical life and varies the recovery period separately. This framework passes `*.lifetime_yr` to capital annualization in `cases.fixed_costs`. These fields specify financial recovery periods; use them for financial sensitivities, not as technical-life declarations.
+- **Emissions interpretation (Secs. 2.2.5 and 4.1).** The article uses attributional hourly-average grid factors. This framework likewise charges imports and credits exports using `carbon_g_per_kwh` in `results.account`. Negative `footprint_t_co2` values are export-credited accounting balances, not physical carbon removal or estimates of marginal avoided emissions.
+- **Load shape (Secs. 2.1 and 4.1).** The article includes an equal-energy constant-load check. This framework accepts user-supplied IT series but has no dedicated helper for that check; `scale_data_center` changes scale only. Assemble the check with a separate constant series at the original mean load, keeping other inputs fixed.
 
 ## Configurations
 
@@ -26,7 +37,7 @@ A lithium-ion battery can be added to Cases 1 and 2 (the article's battery sensi
 |---|---|---|
 | $`t \in \mathcal{T}`$ | hourly time step; the article uses one year, $`\lvert\mathcal{T}\rvert = 8760`$ | `t` |
 | $`c \in \mathcal{C}`$ | configuration, $`\mathcal{C} = \{0,1,2,3\}`$ | `case` |
-| $`\mathcal{T}_\mathrm{out} \subset \mathcal{T}`$ | scheduled refueling-outage hours (contiguous) | `outage` |
+| $`\mathcal{T}_\mathrm{out} \subset \mathcal{T}`$ | scheduled outage hours (contiguous; an availability proxy) | `outage` |
 | $`k`$ | segment of the chiller part-load map (implementation) | `k` |
 
 ## Parameters
@@ -62,7 +73,7 @@ A lithium-ion battery can be added to Cases 1 and 2 (the article's battery sensi
 | $`h_\mathrm{ng}`$, $`\eta_\mathrm{hhv}`$ | NGCC full-load HHV heat rate $`h_\mathrm{ng} = 3.412/\eta_\mathrm{hhv}`$ and efficiency | MMBtu/MWh_e, – | `gas_plant.hhv_efficiency` |
 | $`\phi_\mathrm{ng}(\ell)`$ | NGCC part-load heat-rate multiplier, $`\phi_\mathrm{ng} \ge 1`$, equal to one at full load | – | `gas_plant.part_load_fraction`, `gas_plant.part_load_heat_rate_multiplier` |
 | $`\gamma_\mathrm{rx}`$, $`\gamma_\mathrm{ng}`$ | reactor and NGCC life-cycle emission factors ($`\gamma_\mathrm{ng}`$ = direct combustion + upstream methane) | g CO₂-eq/kWh_e | `reactor.lifecycle_g_per_kwh`, `gas_plant.co2_direct_g_per_kwh` + `co2_upstream_g_per_kwh` |
-| $`\mathrm{CAPEX}_k`$, $`N_k`$ | overnight capital per unit of size, and engineering life of asset $`k`$. Per kW_e of net rating for the reactor and NGCC, per kW_c for the chillers, per kWh of energy capacity for the battery | $/kW or $/kWh, yr | `*.capex_usd_per_*`, `*.lifetime_yr` |
+| $`\mathrm{CAPEX}_k`$, $`N_k`$ | overnight capital per unit of size, and capital-recovery period of asset $`k`$. Per kW_e of net rating for the reactor and NGCC, per kW_c for the chillers, per kWh of energy capacity for the battery | $/kW or $/kWh, yr | `*.capex_usd_per_*`, `*.lifetime_yr` |
 | $`\mathrm{FOM}_k`$ | fixed O&M per unit of size and year. Per kW of the same size unit, except the battery: per kW of power rating | $/kW/yr | `*.fom_usd_per_*_yr` |
 | $`S_k`$, $`S_k^\mathrm{FOM}`$ | installed size of asset $`k`$ for capital and for fixed O&M: net MW_e for the reactor, MW_c for the chillers, MW_e for the NGCC; for the battery, energy capacity $`\mathrm{Cap}_\mathrm{E}`$ (MWh) for capital and power rating $`\overline{B}`$ (MW) for fixed O&M | MW or MWh | `CaseResult.sizes` |
 | $`v_x`$ | variable O&M coefficient of stream $`x`$ | $/MWh | `*.vom_usd_per_*` |
@@ -100,7 +111,7 @@ Each scenario is labeled by its full-load power usage effectiveness (PUE) under 
 
 ## Reactor and turbine block (Cases 1 and 2)
 
-The reactor is a continuous thermal source, bounded, held at zero through the refueling window and ramp-limited:
+The reactor is a continuous thermal source, bounded, held at zero through the scheduled outage window (an availability proxy) and ramp-limited:
 
 ```math
 \underline{P}_\mathrm{rx} \le P_\mathrm{rx}(t) \le \overline{P}_\mathrm{rx}, \quad \forall\, t \in \mathcal{T}\setminus\mathcal{T}_\mathrm{out} \qquad (\mathrm{S7})
@@ -130,7 +141,7 @@ P_\mathrm{tn}(t) = (1 - \xi_\mathrm{aux})\, P_\mathrm{tg}(t) \qquad (3)
 
 with $`P_\mathrm{tg}(t) = 0`$ during the outage window.
 
-- The Willans line is fitted by least squares to the turbine part-load heat-rate characteristic and constrained through the design point (`timeseries.fit_willans`, `heat_rate_to_thermal`).
+- This framework provides a least-squares Willans fitting helper constrained through the design point (`timeseries.fit_willans`, `heat_rate_to_thermal`). The article calibrates gross rating while retaining a fixed normalized part-load shape (Sec. 2.2.1); this is an engineering approximation, not a manufacturer-validated turbine map.
 - The extraction coefficient follows from a steam-table heat balance of the extraction tap: the low-pressure expansion work forfeited per kilogram of extracted steam, net of the hot-condensate-return credit, divided by the heat delivered to the absorber generator (`extraction_penalty_from_heat_balance`). Diverted steam still expands through the high-pressure turbine before extraction.
 
 ## Absorption-chiller submodel (Case 2)
@@ -147,7 +158,7 @@ The lower bound (written as 0.5 in the article) is a numerical safeguard; the cr
 a(t) = \begin{cases} 1 & \text{if } T_\mathrm{wb}(t) + \Delta T_\mathrm{cw} \le T_\mathrm{cry} \text{ and } t \notin \mathcal{T}_\mathrm{out}, \\ 0 & \text{otherwise} \end{cases} \qquad (5)
 ```
 
-The absorber is fully offline whenever the cooling-water inlet would exceed the crystallization threshold, and throughout the reactor refueling outage, inside which its own annual maintenance is scheduled. No separate availability derate is applied. Delivered absorption cooling is
+The absorber is fully offline whenever the cooling-water inlet would exceed the crystallization threshold, and throughout the scheduled reactor outage. This framework assumes its annual maintenance coincides with that outage; Eq. (5) above therefore omits the article's separate maintenance set. No separate availability derate is applied. Delivered absorption cooling is
 
 ```math
 Q_\mathrm{a}(t) = \mathrm{COP}_\mathrm{a}\big(T_\mathrm{wb}(t)\big)\cdot a(t)\cdot Q_\mathrm{ext}(t) \qquad (6)
@@ -168,7 +179,7 @@ The chiller electricity is a non-convex, piecewise-linear function of the coolin
 r(t) = \min\big[\, 1 + \sigma_\mathrm{v}\,(T_\mathrm{wb,v} - T_\mathrm{wb}(t)),\ \overline{r}\, \big]
 ```
 
-where $`\sigma_\mathrm{v}`$ (`chiller.relief_per_k`) and $`\overline{r}`$ (`chiller.relief_cap`) are the absorber's relief slope and cap expressed relative to its design point, $`\sigma_\mathrm{v} = \delta/\mathrm{COP}_\mathrm{a}^{\,0}`$ and $`\overline{r} = \overline{\mathrm{COP}}_\mathrm{a}/\mathrm{COP}_\mathrm{a}^{\,0}`$ (`relief_matching_absorber`), and $`T_\mathrm{wb,v}`$ is the chiller's design wet-bulb. Cooler condenser water benefits both chillers identically, and warmer hours derate both. Hence
+where $`\sigma_\mathrm{v}`$ (`chiller.relief_per_k`) and $`\overline{r}`$ (`chiller.relief_cap`) are the absorber's relief slope and cap expressed relative to its design point, $`\sigma_\mathrm{v} = \delta/\mathrm{COP}_\mathrm{a}^{\,0}`$ and $`\overline{r} = \overline{\mathrm{COP}}_\mathrm{a}/\mathrm{COP}_\mathrm{a}^{\,0}`$ (`relief_matching_absorber`), and $`T_\mathrm{wb,v}`$ is the chiller's design wet-bulb. Matching these coefficients assumes the same relative wet-bulb response for both chillers, a simplifying assumption in the article (Sec. 2.2.3); chiller-specific maps could change estimated cooling savings. Hence
 
 ```math
 P_\mathrm{v}(t) = \frac{f_\mathrm{v}\big(Q_\mathrm{v}(t)\big)}{r(t)}
@@ -232,7 +243,7 @@ The optimization minimizes the total annualized cost (TAC) across seven accounti
 \min\ \mathrm{TAC} = \sum_k \mathrm{CRF}_k\,\mathrm{CAPEX}_k\, S_k + \mathrm{FOM} + \mathrm{VOM} + \Phi_\mathrm{fuel} + \Phi_\mathrm{grid} + \Phi_\mathrm{CO_2} - \Phi_\mathrm{ptc} \qquad (9)
 ```
 
-**Capital recovery.** The first term annualizes the capital of the reactor, turbine, absorption and vapor-compression chillers, battery and NGCC, sized at $`S_k`$, each over its own engineering life $`N_k`$ at the WACC $`i`$:
+**Capital recovery.** The first term annualizes the capital of the reactor, turbine, absorption and vapor-compression chillers, battery and NGCC, sized at $`S_k`$, each over its own capital-recovery period $`N_k`$ at the WACC $`i`$:
 
 ```math
 \mathrm{CRF}_k = \frac{i\,(1+i)^{N_k}}{(1+i)^{N_k} - 1}
@@ -253,9 +264,9 @@ The optimization minimizes the total annualized cost (TAC) across seven accounti
 \Phi_\mathrm{CO_2} = \pi_\mathrm{CO_2}\,\Theta \sum_t \Big[\gamma_\mathrm{rx}\, P_\mathrm{tn}(t) + \theta(t)\,\big(P_\mathrm{g}^{+}(t) - P_\mathrm{g}^{-}(t)\big)\Big]\Delta t \qquad (11)
 ```
 
-- Reactor generation is charged at its life-cycle factor $`\gamma_\mathrm{rx}`$.
-- Imports are charged, and exports credited, at the hourly average grid intensity $`\theta(t)`$, used as a tractable proxy for the marginal emission factor.
-- The bracket summed over hours is the case's net carbon footprint (`footprint_t_co2`, after $`\Theta`$).
+- Reactor generation is charged at its life-cycle factor $`\gamma_\mathrm{rx}`$, which this framework also uses for reporting; the article's separate billing factor is not implemented.
+- Imports are charged, and exports credited, at the hourly average grid intensity $`\theta(t)`$. This is attributional accounting, not an estimate of marginal grid-emissions response.
+- The bracket summed over hours is the case's export-credited carbon-accounting balance (`footprint_t_co2`, after $`\Theta`$). Negative values do not represent physical carbon removal.
 
 **Variable O&M and nuclear fuel:**
 
@@ -363,14 +374,14 @@ The TAC uses the buckets above, so all four cases are on one accounting basis. S
 
 ## Relations used by the boundary tools
 
-These follow from the formulation and are stated in the article's Supplementary Notes 3 and 5.
+These follow from the formulation and are stated in the arXiv v1 preprint's Supplementary Notes 3 and 5.
 
 - **Dispatch-neutral capital.** The capital of an asset with a fixed size enters Eq. (9) only as $`\mathrm{CRF}_k\,\mathrm{CAPEX}_k S_k`$ and appears in no constraint. The optimal dispatch therefore does not depend on it, and $`\mathrm{TAC} = K(\text{capital}) + D(\text{dispatch})`$.
   - A TAC gap $`\Delta\mathrm{TAC}`$ closes at $`\mathrm{CAPEX}_k^{*} = \mathrm{CAPEX}_k - \Delta\mathrm{TAC}/(\mathrm{CRF}_k S_k)`$ without further solves (`breakeven_capex`).
   - Applied to the reactor against Case 0: `reactor_parity_capex`.
   - Applied to the absorber, Case 2 against Case 1 (Case 1 installs no absorber): `absorber_breakeven_capex`.
   - A negative value means that no non-negative capital cost closes the gap.
-- **Carbon price.** For fixed dispatch, TAC is linear in $`\pi_\mathrm{CO_2}`$ with slope equal to the net footprint. TAC is therefore the minimum of linear functions: it is concave in the carbon price, and its slope at any price is the footprint of the optimal dispatch at that price.
+- **Carbon price.** For fixed dispatch, TAC is linear in $`\pi_\mathrm{CO_2}`$ with slope equal to the export-credited carbon-accounting balance. TAC is therefore the minimum of linear functions: it is concave in the carbon price, and its slope at any price is the accounting balance of the optimal dispatch at that price.
   - Crossover prices are interpolated between solved prices (`crossover_price`).
   - A crossing beyond the highest solved price can be extrapolated from the last two solved points; it is flagged as extrapolated.
 
@@ -384,18 +395,18 @@ These follow from the formulation and are stated in the article's Supplementary 
 6. **Battery.** $`E_\mathrm{B}(0)`$ is the state before the first hour. The end-state condition holds for any horizon length. The salvage credit uses the sinking-fund convention: an asset with overnight cost $`P`$ and salvage share $`s`$ costs $`P\,[\mathrm{CRF}\,(1-s) + s\,i]`$ per year, that is $`P\,\mathrm{CRF} - sP\,\mathrm{SFF}`$ with $`\mathrm{SFF} = \mathrm{CRF} - i`$.
 7. **Chiller map.** The same piecewise-linear $`f_\mathrm{v}`$ is used in the closed-form cases (evaluated directly) and in the MILP (incremental formulation), so Case 0 solved either way gives the same result. The relief multiplier $`r(t)`$ has no lower bound; a non-positive value is an input error.
 8. **NGCC part-load curve.** $`\phi_\mathrm{ng}`$ is interpolated linearly between the given points and held at its end values outside them.
-9. **Reactor size.** $`S_\mathrm{rx}`$, used for the reactor's CAPEX and FOM and for $`\overline{P}_\mathrm{tn}`$ in $`\pi_\mathrm{f}`$, is the net electric rating. It is taken from `reactor.net_rating_mwe` if given; otherwise it is Eqs. (2)–(3) at $`\overline{P}_\mathrm{rx}`$ with no extraction. A turbine cost, if given, is annualized over the reactor life.
+9. **Reactor size.** $`S_\mathrm{rx}`$, used for the reactor's CAPEX and FOM and for $`\overline{P}_\mathrm{tn}`$ in $`\pi_\mathrm{f}`$, is the net electric rating. It is taken from `reactor.net_rating_mwe` if given; otherwise it is Eqs. (2)–(3) at $`\overline{P}_\mathrm{rx}`$ with no extraction. A turbine cost, if given, is annualized over the reactor's capital-recovery period.
 10. **Credit levelization.** If the credit lasts at least as long as the window, it is not reduced. `reactor.ptc_eligible = false` removes the credit.
 11. **Objective and fixed costs.** The solver objective holds the dispatch-dependent terms. Capital and fixed O&M are added afterwards, so TAC = objective + fixed costs, which is Eq. (9). After every solve the cost buckets are recomputed from the hourly solution by the same function that evaluates the closed-form cases; the tests check that both agree.
 12. **Capacity checks.** Case 0 imports and Case 3 generation must stay within the PCC and the NGCC rating, and the cooling demand within the chiller nameplate; otherwise an error is raised.
-13. **Solver tolerance.** The default relative MIP gap is $`10^{-6}`$ (HiGHS `mip_rel_gap`, Gurobi `MIPGap`). It can be changed through the solver options.
+13. **Solver tolerance.** The default relative MIP gap is $`10^{-6}`$ (HiGHS `mip_rel_gap`, Gurobi `MIPGap`). It can be changed through the solver options. The article's relative gap target is `1e-4` (Sec. 2.2).
 
 ## Scope stated in the article
 
-The article states these limits of its setting. They apply equally to this framework.
+The article states these limits and qualifications; they guide use of this framework.
 
 - Grid prices and carbon intensities are exogenous: the site is a price taker.
 - Exports are credited at the hourly average, not the marginal, emission factor. Crossover carbon prices depend on this crediting convention.
 - PUE counts cooling power only. Uninterruptible-power-supply, distribution and lighting overheads are excluded.
-- The data-center load follows one profile, whose scale but not shape is varied.
+- The main scenarios use one IT-load shape with size scaling; the article additionally checks an equal-energy constant load (Secs. 2.1 and 4.1).
 - The 45Y credit is levelized over the comparison window by Eq. (12). Results depend on the window chosen.

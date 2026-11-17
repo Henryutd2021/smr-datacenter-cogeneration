@@ -1,6 +1,6 @@
 # Study design and scenario sets
 
-This document describes the article's study design and how to express each part with this framework. The article's run ledger (its Table 3) lists the levels of every sweep; they are not repeated here. [`examples/boundary_sweeps.py`](../examples/boundary_sweeps.py) runs a reduced version on synthetic data with illustrative levels.
+This document describes the article's main scenario groups and how to express them with this framework. The article's run ledger (its Table 3) lists the levels of every sweep; they are not repeated here. Its separate robustness checks are discussed in [Differences from the published study](formulation.md#differences-from-the-published-study). [`examples/boundary_sweeps.py`](../examples/boundary_sweeps.py) runs a reduced version on synthetic data with illustrative levels.
 
 ## Building blocks
 
@@ -26,7 +26,7 @@ from smr_dc_cogen import Scenario
 base = [Scenario(f"G0_case{c}", c, "year_base", group="G0") for c in (0, 1, 2, 3)]
 ```
 
-## One-at-a-time sweeps
+## One-at-a-time sweeps and joint grids
 
 | Group | What varies | Cases | How to express it |
 |---|---|---|---|
